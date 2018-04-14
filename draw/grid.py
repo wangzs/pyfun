@@ -8,27 +8,29 @@ import pygame
 @param color: 栅格的边颜色
 '''
 class Grid:
-    def __init__(self, top_left, size, unit_len, color=(0x00, 0x80, 0xff)):
-        self.size = size
+    def __init__(self, top_left, size_w, size_h, unit_len, color=(0x00, 0x80, 0xff)):
+        self.size_w = size_w
+        self.size_h = size_h
         self.top_x, self.top_y = top_left
         self.unit_len = unit_len
-        self.length = unit_len * size
+        self.width = unit_len * size_w
+        self.height = unit_len * size_h
         self.color = color
 
     # 绘制网格边
     def draw_grid_line(self, surface):
-        pygame.draw.line(surface, self.color, (self.top_x, self.top_y), (self.top_x, self.top_y + 100))
+        # pygame.draw.line(surface, self.color, (self.top_x, self.top_y), (self.top_x, self.top_y + 100))
 
         start_y = self.top_y
-        end_y = start_y + self.length
-        for i in range(0, self.size + 1):
+        end_y = start_y + self.height
+        for i in range(0, self.size_w + 1):
             start_x = self.top_x + i * self.unit_len
             end_x = start_x
             pygame.draw.line(surface, self.color, (start_x, start_y), (end_x, end_y))
 
         start_x = self.top_x
-        end_x = start_x + self.length
-        for j in range(0, self.size + 1):
+        end_x = start_x + self.width
+        for j in range(0, self.size_h + 1):
             start_y = self.top_y + j * self.unit_len
             end_y = start_y
             pygame.draw.line(surface, self.color, (start_x, start_y), (end_x, end_y))
@@ -36,12 +38,18 @@ class Grid:
     # 设置单元格长度（最小1）
     def set_unit_len(self, unit_len):
         self.unit_len = unit_len
-        self.length = self.unit_len * self.size
+
+    # 设置单元格横纵单元格个数
+    def set_grid_size(self, size_w, size_h):
+        self.size_w = size_w
+        self.size_h = size_h
+        self.width = self.unit_len * size_w
+        self.height = self.unit_len * size_h
 
     # pos为网格中的坐标位置（0，0）表示第一个单元格
     def draw_unit_grid(self, surface, pos, color=(0, 0, 0)):
         if pos[0] < 0 or pos[1] < 0 \
-                or pos[0] > self.size - 1 or pos[1] > self.size - 1:
+                or pos[0] > self.size_w - 1 or pos[1] > self.size_h - 1:
             return
         grid_rect = self.get_grid_block_by_grid_pos(pos)
         pygame.draw.rect(surface, color, grid_rect, 0)
@@ -52,12 +60,12 @@ class Grid:
         relate_y = point[1] - self.top_y
         if relate_x < 0:
             relate_x = 0
-        if relate_x > self.length:
-            relate_x = self.length
+        if relate_x > self.width:
+            relate_x = self.width
         if relate_y < 0:
             relate_y = 0
-        if relate_y > self.length:
-            relate_y = self.length
+        if relate_y > self.height:
+            relate_y = self.height
 
         pos_x = self.top_x + (int)(relate_x / self.unit_len) * self.unit_len
         pos_y = self.top_y + (int)(relate_y / self.unit_len) * self.unit_len
@@ -70,12 +78,12 @@ class Grid:
         relate_y = point[1] - self.top_y
         if relate_x < 0:
             relate_x = 0
-        if relate_x > self.length:
-            relate_x = self.length
+        if relate_x > self.width:
+            relate_x = self.width
         if relate_y < 0:
             relate_y = 0
-        if relate_y > self.length:
-            relate_y = self.length
+        if relate_y > self.height:
+            relate_y = self.height
 
         return ((int)(relate_x / self.unit_len), (int)(relate_y / self.unit_len))
 

@@ -6,19 +6,12 @@ class GameLife:
     def __init__(self, w, h):
         self.width = w
         self.height = h
-        self.world_ceil = [[0 for i in range(w)] for j in range(h)]
-        self.alive_life = []
+        self.alive_life = set()
+        self.last_alive_life = set()
         self.iter_cnt = 0
         WLog.d("w:%d h:%d" % (w, h))
 
     def update_size(self, w, h):
-        # 重置整个世界的单元格
-        tmp_world_ceil = [[0 for i in range(w)] for j in range(h)]
-        # 将存活的life置到单元格中
-        for pos in self.alive_life:
-            self.__set_life(tmp_world_ceil, pos, True)
-
-        self.world_ceil = tmp_world_ceil
         self.width = w
         self.height = h
 
@@ -27,32 +20,20 @@ class GameLife:
             self.add_pos_to_origin(origin)
 
     def add_pos_to_origin(self, pos):
+        pos = tuple(pos)
         WLog.d("add pos (%d,%d)" % (pos[0], pos[1]))
-        self.__set_life(self.world_ceil, pos, True)
-        self.alive_life.append(pos)
+        self.alive_life.add(pos)
+        self.last_alive_life.add(pos)
 
     def reset(self):
         self.iter_cnt = 0
-        self.world_ceil = [[0 for i in range(self.width)] for j in range(self.height)]
         self.alive_life.clear()
-
-    def __pos_is_outside(self, pos):
-        if pos[0] < 0 or pos[1] < 0 \
-                or pos[0] > self.width-1 or pos[1] > self.height - 1:
-            return True
-        return False
+        self.last_alive_life.clear()
 
     def __is_alive(self, pos):
-        if not self.__pos_is_outside(pos):
-            return self.world_ceil[pos[1]][pos[0]] == 1
+        if pos in self.last_alive_life:
+            return True
         return False
-
-    # ceil_list: 需要设置点的来源网格list
-    # pos: 设置点位置
-    def __set_life(self, ceil_list, pos, alive):
-        if self.__pos_is_outside(pos):
-            return
-        ceil_list[pos[1]][pos[0]] = (1 if alive else 0)
 
     def __iterate_life(self, pos):
         pos_x = pos[0]
@@ -69,26 +50,26 @@ class GameLife:
         if self.__is_alive(pos):
             # 少于2个死亡 2/3个的时候才活着
             if neighbours_alive_cnt == 2 or neighbours_alive_cnt == 3:
-                self.alive_life.append(pos)
+                self.alive_life.add(pos)
         else:
             # 附近有3个才活着
             if neighbours_alive_cnt == 3:
-                self.alive_life.append(pos)
+                self.alive_life.add(pos)
 
     def iterate(self):
-        WLog.d("iterate time: %d " % self.iter_cnt)
-        self.iter_cnt += 1
+        WLog.d("iterate time: %d  alive ceil cnt: %d" % (self.iter_cnt, len(self.last_alive_life)))
         self.alive_life.clear()
         # 找出本轮迭代存活下来的life
         for j in range(self.height):
             for i in range(self.width):
-                pos = [i, j]
+                pos = (i, j)
                 self.__iterate_life(pos)
-        # 重置整个世界的单元格
-        self.world_ceil = [[0 for i in range(self.width)] for j in range(self.height)]
         # 将存活的life置到单元格中
+        self.last_alive_life.clear()
         for pos in self.alive_life:
-            self.__set_life(self.world_ceil, pos, True)
+            self.last_alive_life.add(pos)
+
+        self.iter_cnt += 1
 
     def run(self, callback):
         for pos in self.alive_life:

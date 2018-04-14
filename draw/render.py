@@ -39,6 +39,12 @@ class BaseRender:
         self.width = w
         self.height = h
 
+    def on_window_resize(self):
+        pass
+
+    def on_before_exit(self):
+        pass
+
     def clear_bg(self):
         self.screen.fill(self.bg_color)
 
@@ -55,11 +61,13 @@ class BaseRender:
     def handle_event(self, event):
         if event.type == KEYDOWN and event.key == K_ESCAPE \
                 or event.type == QUIT:
+            self.on_before_exit()
             exit()
         elif event.type == VIDEORESIZE:
             self.width = event.w
             self.height = event.h
             self.screen = pygame.display.set_mode((self.width, self.height), RESIZABLE, 32)
+            self.on_window_resize()
 
     def start(self, mode=RESIZABLE):
         self.screen = pygame.display.set_mode((self.width, self.height), mode, 32)

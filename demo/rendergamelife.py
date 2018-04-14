@@ -6,6 +6,7 @@ from draw.grid import Grid
 from utils.logger import WLog
 
 import pygame
+import math
 
 base_life_shape = {
     "Glider": [[1,0], [2,1], [2,2], [1,2], [0,2]],
@@ -17,14 +18,21 @@ base_life_shape = {
     "Gosper Glider Gun": [[0,2], [0,3], [1,2], [1,3], [8,3], [8,4], [9,2], [9,4], [10,2], [10,3], [16,4], [16,5], [16,6], [17,4], [18,5], [22,1], [22,2], [23,0], [23,2], [24,0], [24,1], [24,12], [24,13], [25,12], [25,14], [26,12], [34,0], [34,1], [35,0], [35,1], [35,7], [35,8], [35,9], [36,7], [37,8]]
 }
 
+MAX_GRID_UNIT = 40
+MIX_GRID_UNIT = 3
+
+CHOSE_SHAPE_NAME = "Glider"
+
 class RenderGameLife(BaseRender):
     def __init__(self, color):
         BaseRender.__init__(self, "Game Life Demo")
         self.color = color
         self.line_grid_unit = 20
-        size = (int)(self.width/ self.line_grid_unit)
-        self.grid = Grid((0, 0), size, self.line_grid_unit)
-        self.game_life = GameLife(size, size)
+
+        size_w = (int)(math.ceil(self.width / self.line_grid_unit))
+        size_h = (int)(math.ceil(self.height / self.line_grid_unit))
+        self.grid = Grid((0, 0), size_w, size_h, self.line_grid_unit)
+        self.game_life = GameLife(size_w, size_h)
         self.run_state = False
 
     # 获取生命游戏的原始形状信息
@@ -35,6 +43,28 @@ class RenderGameLife(BaseRender):
     def __callback(self, pos, alive):
         if alive:
             self.grid.draw_unit_grid(self.screen, pos, self.color)
+
+    def __change_size(self):
+        size_w,size_h = self.__get_size()
+        self.grid.set_unit_len(self.line_grid_unit)
+        self.grid.set_grid_size(size_w, size_h)
+        self.game_life.update_size(size_w, size_h)
+
+    def __resize(self, is_up):
+        if is_up:
+            self.line_grid_unit = self.line_grid_unit + 1 if self.line_grid_unit < MAX_GRID_UNIT else MAX_GRID_UNIT
+        else:
+            self.line_grid_unit = self.line_grid_unit - 1 if self.line_grid_unit > MIX_GRID_UNIT else MIX_GRID_UNIT
+        self.__change_size()
+
+    def __get_size(self):
+        size_w = (int)(math.ceil(self.width / self.line_grid_unit))
+        size_h = (int)(math.ceil(self.height / self.line_grid_unit))
+        return size_w, size_h
+
+    def on_window_resize(self):
+        WLog.d("window size: %d,%d" % (self.width, self.height))
+        self.__change_size()
 
     def render_frame(self):
         BaseRender.clear_bg(self)
@@ -52,12 +82,18 @@ class RenderGameLife(BaseRender):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 self.run_state = not self.run_state
-        elif event.type == pygame.MOUSEBUTTONDOWN:
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:    # mouse left btn 1-left 3-right
             pix_pos = pygame.mouse.get_pos()
             WLog.d("mouse click pos: %d,%d" % (pix_pos[0], pix_pos[1]))
             grid_pos = self.grid.get_grid_pos(pix_pos)
             WLog.d("grid pos: %d,%d" % (grid_pos[0], grid_pos[1]))
-            self.game_life.set_origin(self.__get_shape("Glider", grid_pos))
+            self.game_life.set_origin(self.__get_shape(CHOSE_SHAPE_NAME, grid_pos))
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 4:   # up
+                self.__resize(True)
+            elif event.button == 5: # down
+                self.__resize(False)
+
 
 
 WLog.enable = True
