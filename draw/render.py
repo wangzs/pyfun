@@ -5,6 +5,13 @@ from pygame.locals import *
 from sys import exit
 import time
 
+from utils.logger import WLog
+
+MOUSE_LEFT_BUTTON = 1
+MOUSE_RIGHT_BUTTON = 3
+MOUSE_MIDDLE_BUTTON = 2
+MOUSE_SCROLL_UP = 4
+MOUSE_SCROLL_DOWN = 5
 
 class BaseRender:
     def __init__(self, wnd_title):
@@ -45,6 +52,12 @@ class BaseRender:
     def on_before_exit(self):
         pass
 
+    def on_key_event(self, key_code, is_down):
+        pass
+
+    def on_mouse_event(self, mouse_event, is_down):
+        pass
+
     def clear_bg(self):
         self.screen.fill(self.bg_color)
 
@@ -58,16 +71,22 @@ class BaseRender:
         self.update()
 
     # 子类重新实现函数即可响应设备的输入
-    def handle_event(self, event):
-        if event.type == KEYDOWN and event.key == K_ESCAPE \
+    def __handle_event(self, event):
+        event_type = event.type
+        if event_type == KEYDOWN and event.key == K_ESCAPE \
                 or event.type == QUIT:
             self.on_before_exit()
             exit()
-        elif event.type == VIDEORESIZE:
+        elif event_type == VIDEORESIZE:
             self.width = event.w
             self.height = event.h
             self.screen = pygame.display.set_mode((self.width, self.height), RESIZABLE, 32)
             self.on_window_resize()
+        elif event_type == KEYDOWN or event_type == KEYUP:
+            self.on_key_event(event.key, event_type == KEYDOWN)
+        elif event_type == MOUSEBUTTONDOWN or event_type == MOUSEBUTTONUP:
+            self.on_mouse_event(event.button, event_type == MOUSEBUTTONDOWN)
+
 
     def start(self, mode=RESIZABLE):
         self.screen = pygame.display.set_mode((self.width, self.height), mode, 32)
@@ -75,7 +94,7 @@ class BaseRender:
 
         while True:
             for event in pygame.event.get():
-                self.handle_event(event)
+                self.__handle_event(event)
             self.render_frame()
 
             # test = BaseRender("Test Base Render class")
